@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Android Interview</string>
+
+    <string name="tab_launch_control">Launch control</string>
+    <string name="tab_launch_list">Launches</string>
+    <string name="launch_list_title">Launches</string>
+    <string name="launch_control_title">Launch control</string>
+
+    <string name="label_launcher_explanation">Welcome to the Launch Control App! This app is the place to be if you want to witness the most epic rocket launches in the galaxy. Our team of rocket scientists and space enthusiasts will guide you through every step of the launch process, from ignition to liftoff. You’ll feel the anticipation as the countdown begins, and the excitement builds. And when the rocket finally takes off, you’ll be blown away by the sheer power and majesty of it all. So dive into the app and experience the thrill of a lifetime!</string>
+    <string name="label_next_launch">Next launch t-minus: %1$s</string>
+</resources>
