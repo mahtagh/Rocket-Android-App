@@ -2,10 +2,15 @@ package com.neofinancial.neo.android.interview.screens.next.launch
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,13 +30,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.neofinancial.neo.android.interview.R
 import com.neofinancial.neo.android.interview.components.Header
 import com.neofinancial.neo.android.interview.ui.theme.Typography
+import androidx.compose.ui.Alignment
+
 
 
 @Composable
-fun LaunchControlContent() {
-    val viewModel: LaunchControlViewModel = viewModel()
+fun LaunchControlContent(viewModel: LaunchControlViewModel = viewModel()) {
     val nextLaunch by viewModel.nextLaunch.collectAsState()
     val countdown by viewModel.countdown.collectAsState()
+    val launchStarted by viewModel.launchStarted.collectAsState()
 
     Scaffold(
         topBar = {
@@ -39,10 +46,10 @@ fun LaunchControlContent() {
         },
         content = { paddingValues ->
             Column(
-                Modifier
+                modifier = Modifier
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp)
-                    .padding(paddingValues),
+                    .padding(top = paddingValues.calculateTopPadding()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Tile {
@@ -51,21 +58,16 @@ fun LaunchControlContent() {
                 Tile {
                     if (nextLaunch != null) {
                         Text(
-                            text = stringResource(R.string.label_next_launch, nextLaunch!!.name),
+                            text = stringResource(R.string.label_next_launch, countdown),
                             style = Typography.labelMedium
                         )
-                        Text(
-                            text = "Countdown: $countdown",
-                            style = Typography.bodyLarge,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                        Image(
-                            painter = painterResource(R.drawable.rocket),
-                            contentDescription = null,
+                        Box(
                             modifier = Modifier
-                                .padding(top = 16.dp)
-                                .fillMaxWidth(),
-                        )
+                                .fillMaxWidth()
+                                .height(400.dp)
+                        ) {
+                            RocketLiftOffController(startLaunch = launchStarted)
+                        }
                     } else {
                         Text("Loading next launch...", style = Typography.labelMedium)
                     }
@@ -91,5 +93,31 @@ private fun Tile(
         Column(Modifier.padding(16.dp)) {
             content()
         }
+    }
+}
+
+@Composable
+fun RocketLiftOffController(
+    startLaunch: Boolean
+) {
+    val offsetY by animateDpAsState(
+        targetValue = if (startLaunch) (-250).dp else 0.dp,
+        animationSpec = tween(durationMillis = 2000),
+        label = "LiftOff"
+    )
+
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(300.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.rocket),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .offset(y = offsetY)
+        )
+
     }
 }

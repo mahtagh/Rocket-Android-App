@@ -23,6 +23,10 @@ class LaunchControlViewModel : ViewModel(){
     private val _countdown = MutableStateFlow("Calculating...")
     val countdown: StateFlow<String> = _countdown
 
+    private val _launchStarted = MutableStateFlow(false)  // The lift-off state
+    val launchStarted: StateFlow<Boolean> = _launchStarted
+
+
     init {
         viewModelScope.launch {
             try {
@@ -36,12 +40,14 @@ class LaunchControlViewModel : ViewModel(){
                     } else {
                         TODO("VERSION.SDK_INT < O")
                     }
+                    val simulatedLaunchTime = Instant.now().plusSeconds(5)
+
                     while (true) {
-                        val now = Instant.now().minusSeconds(2 * 365 * 24 * 60 * 60)
-                            //java.time.Instant.now()
-                        val duration = Duration.between(now, launchTime)
+                        val now = Instant.now()
+                        val duration = Duration.between(now, simulatedLaunchTime)
                         if (duration.isNegative || duration.isZero) {
                             _countdown.value = "Launched!"
+                            _launchStarted.value = true
                             break
                         }
                         _countdown.value = formatDuration(duration)
@@ -53,6 +59,7 @@ class LaunchControlViewModel : ViewModel(){
             }
         }
     }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun formatDuration(duration: Duration): String {
@@ -78,5 +85,7 @@ class LaunchControlViewModel : ViewModel(){
             .minByOrNull { it.second }
             ?.first
     }
+
+
 
 }
