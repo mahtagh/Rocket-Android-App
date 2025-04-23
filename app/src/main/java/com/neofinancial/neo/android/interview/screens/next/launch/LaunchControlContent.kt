@@ -101,7 +101,7 @@ fun RocketLiftOffController(
     startLaunch: Boolean
 ) {
     val offsetY by animateDpAsState(
-        targetValue = if (startLaunch) (-250).dp else 0.dp,
+        targetValue = if (startLaunch) (-200).dp else 0.dp,
         animationSpec = tween(durationMillis = 2000),
         label = "LiftOff"
     )
@@ -109,7 +109,7 @@ fun RocketLiftOffController(
     Box(
         Modifier
             .fillMaxWidth()
-            .height(300.dp)
+            .height(400.dp)
     ) {
         Image(
             painter = painterResource(id = R.drawable.rocket),
