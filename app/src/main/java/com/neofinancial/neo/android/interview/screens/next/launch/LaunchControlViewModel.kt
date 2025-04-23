@@ -40,14 +40,13 @@ class LaunchControlViewModel : ViewModel(){
                     } else {
                         TODO("VERSION.SDK_INT < O")
                     }
-                    val simulatedLaunchTime = Instant.now().plusSeconds(5)
-
+                    //val simulatedLaunchTime = Instant.now().plusSeconds(5)
                     while (true) {
-                        val now = Instant.now()
-                        val duration = Duration.between(now, simulatedLaunchTime)
+                        val now = Instant.now().minusSeconds(2 * 365 * 24 * 60 * 60)
+                        //java.time.Instant.now()
+                        val duration = Duration.between(now, launchTime)
                         if (duration.isNegative || duration.isZero) {
                             _countdown.value = "Launched!"
-                            _launchStarted.value = true
                             break
                         }
                         _countdown.value = formatDuration(duration)
@@ -63,10 +62,13 @@ class LaunchControlViewModel : ViewModel(){
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun formatDuration(duration: Duration): String {
-        val hours = duration.toHours()
-        val minutes = duration.toMinutes() % 60
-        val seconds = duration.seconds % 60
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+        val totalSeconds = duration.seconds
+        val days = totalSeconds / (24 * 3600)
+        val hours = (totalSeconds % (24 * 3600)) / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+
+        return String.format("%02d:%02d:%02d:%02d", days, hours, minutes, seconds)
     }
 
     fun getNextLaunch(launches: List<Launch>): Launch? {
