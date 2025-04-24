@@ -1,64 +1,86 @@
 package com.neofinancial.neo.android.interview.screens
 
-import android.os.Build
-import androidx.annotation.RequiresApi
+import com.neofinancial.neo.android.interview.models.Launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.Duration
-import java.time.Instant
-import java.time.ZonedDateTime
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 
-class Time {
+object Time {
 
-    // Format the duration into a human-readable string
-    @RequiresApi(Build.VERSION_CODES.O)
+    /**
+     * Formats a Duration into a human-readable countdown string (T-DD:HH:MM:SS).
+     */
     fun formatDuration(duration: Duration): String {
         val totalSeconds = duration.seconds
-        val days = totalSeconds / (24 * 3600)
-        val hours = (totalSeconds % (24 * 3600)) / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        val seconds = totalSeconds % 60
+        val days = TimeUnit.SECONDS.toDays(totalSeconds)
+        val hours = TimeUnit.SECONDS.toHours(totalSeconds % TimeUnit.DAYS.toSeconds(1))
+        val minutes = TimeUnit.SECONDS.toMinutes(totalSeconds % TimeUnit.HOURS.toSeconds(1))
+        val seconds = totalSeconds % TimeUnit.MINUTES.toSeconds(1)
 
-        return String.format("T-%d:%02d:%02d:%02d", days, hours, minutes, seconds)
+        return when {
+            days > 0 -> String.format(
+                Locale.getDefault(),
+                "%d day%s, %d:%02d:%02d",
+                days,
+                if (days > 1) "s" else "",
+                hours,
+                minutes,
+                seconds
+            )
+
+            hours > 0 -> String.format(
+                Locale.getDefault(),
+                "%d hour%s, %02d:%02d",
+                hours,
+                if (hours > 1) "s" else "",
+                minutes,
+                seconds
+            )
+
+            minutes > 0 -> String.format(
+                Locale.getDefault(),
+                "%d minute%s, %02d seconds",
+                minutes,
+                if (minutes > 1) "s" else "",
+                seconds
+            )
+
+            else -> String.format(
+                Locale.getDefault(),
+                "%d second%s",
+                seconds,
+                if (seconds != 1L) "s" else ""
+            )
+        }
     }
 
-    // Parse the launch date string into a ZonedDateTime object
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun parseLaunchDate(dateString: String): ZonedDateTime? =
-        try {
-            ZonedDateTime.parse(dateString)
-        } catch (e: Exception) {
-            null
-        }
-
-    // Start the countdown and update the display every second
-    @RequiresApi(Build.VERSION_CODES.O)
+    // Start the countdown and update the display every 200 milliseconds
     suspend fun startCountdown(
-        launchDateString: String,
+        launch: Launch,
         countdownDisplay: MutableStateFlow<String>,
-        timeRemaining: MutableStateFlow<Long>? = null
+        onLaunched: () -> Unit
     ) {
-        val launchTime = parseLaunchDate(launchDateString)?.toInstant()
-        if (launchTime == null) {
+        var timeUntilLaunch = launch.timeUntilLaunch()
+        if (timeUntilLaunch.isNegative) {
             countdownDisplay.value = "LAUNCHED"
+            onLaunched()
             return
         }
 
-        // Continuously update the countdown display and time remaining
-        while (true) {
-            val now = Instant.now()
-            val duration = Duration.between(now, launchTime)
-            val remainingMillis = duration.toMillis().coerceAtLeast(0L)
+        do {
+            timeUntilLaunch = launch.timeUntilLaunch()
 
-            timeRemaining?.value = remainingMillis
-
-            countdownDisplay.value = if (duration.isNegative || duration.isZero) {
+            countdownDisplay.value = if (timeUntilLaunch.isNegative || timeUntilLaunch.isZero) {
                 "LAUNCHED"
+                onLaunched()
+                return
             } else {
-                formatDuration(duration)
+                formatDuration(timeUntilLaunch)
             }
 
-            delay(1000) // Update the countdown every second
-        }
+            delay(200)
+        } while (true)
     }
 }

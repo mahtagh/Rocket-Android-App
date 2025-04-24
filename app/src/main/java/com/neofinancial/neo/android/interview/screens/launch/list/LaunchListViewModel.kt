@@ -1,15 +1,15 @@
 package com.neofinancial.neo.android.interview.screens.launch.list
-import android.os.Build
-import androidx.annotation.RequiresApi
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neofinancial.neo.android.interview.models.Launch
 import com.neofinancial.neo.android.interview.network.LaunchesDomain
-import com.neofinancial.neo.android.interview.screens.Time
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
 
 class LaunchListViewModel : ViewModel() {
 
@@ -19,39 +19,55 @@ class LaunchListViewModel : ViewModel() {
     private val _selectedLaunch = MutableStateFlow<Launch?>(null)
     val selectedLaunch: StateFlow<Launch?> = _selectedLaunch.asStateFlow()
 
-    private val _timeRemaining = MutableStateFlow(0L)
-    val timeRemaining: StateFlow<Long> = _timeRemaining.asStateFlow()
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private val _countdownDisplay = MutableStateFlow("LAUNCHED")
-    val countdownDisplay: StateFlow<String> = _countdownDisplay.asStateFlow()
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
+
+    private var currentPage = 1
+    private var canLoadMore = true
 
     init {
-        viewModelScope.launch {
-            try {
-                _launches.value = LaunchesDomain.getLaunches()
-            } catch (e: Exception) {
-                // Handle error
-            }
+        loadLaunches()
+    }
+
+    fun selectLaunch(launch: Launch) {
+        _selectedLaunch.value = launch
+    }
+
+    fun refreshLaunches() {
+        currentPage = 1
+        canLoadMore = true
+        _launches.value = emptyList()
+        loadLaunches(isRefresh = true)
+    }
+
+    fun loadMoreLaunches() {
+        if (canLoadMore && !_isLoadingMore.value) {
+            currentPage++
+            loadLaunches(isLoadMore = true)
         }
     }
 
-    fun setLaunches(launchList: List<Launch>) {
-        _launches.value = launchList
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun selectLaunch(launch: Launch) {
-        _selectedLaunch.value = launch
+    private fun loadLaunches(isRefresh: Boolean = false, isLoadMore: Boolean = false) {
         viewModelScope.launch {
-            val time = Time() // Create an instance of Time
-            viewModelScope.launch {
-                time.startCountdown(
-                    launchDateString = launch.launchDate,
-                    countdownDisplay = _countdownDisplay,
-                    timeRemaining = _timeRemaining
-                )
-            }
+            try {
+                if (isRefresh) _isRefreshing.value = true
+                if (isLoadMore) _isLoadingMore.value = true
 
+                val response = LaunchesDomain.getLaunches(currentPage)
+                _launches.update { currentLaunches ->
+                    currentLaunches + response.result
+                }
+                canLoadMore = response.meta.total > _launches.value.size
+            } catch (e: Exception) {
+                println("Error loading launches: ${e.message}")
+                canLoadMore = false
+            } finally {
+                _isRefreshing.value = false
+                _isLoadingMore.value = false
+            }
         }
     }
 }

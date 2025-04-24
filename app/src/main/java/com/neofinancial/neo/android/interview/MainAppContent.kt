@@ -17,9 +17,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.neofinancial.neo.android.interview.screens.launch.list.LaunchListContent
 import com.neofinancial.neo.android.interview.screens.next.launch.LaunchControlContent
+import com.neofinancial.neo.android.interview.screens.next.launch.LaunchControlViewModel
 
 @Composable
-fun MainAppContent() {
+fun MainAppContent(launchControlViewModel: LaunchControlViewModel) {
     val navController = rememberNavController()
 
     val launchControlKey = stringResource(R.string.tab_launch_control)
@@ -40,10 +41,14 @@ fun MainAppContent() {
             Modifier.weight(1f),
         ) {
             composable(launchControlKey) {
-                LaunchControlContent()
+                LaunchControlContent(viewModel = launchControlViewModel)
             }
             composable(launchListKey) {
-                LaunchListContent()
+                LaunchListContent(
+                    navController = navController,
+                    launchControlViewModel = launchControlViewModel,
+                    onTabSelected = { newTab -> selectedTab = newTab } // Pass the callback
+                )
             }
         }
         NavigationBar {
