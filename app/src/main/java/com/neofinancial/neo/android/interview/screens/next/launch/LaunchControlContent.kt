@@ -77,10 +77,6 @@ fun LaunchControlContent(viewModel: LaunchControlViewModel = viewModel()) {
     )
 }
 
-
-
-
-
 @Composable
 private fun Tile(
     modifier: Modifier = Modifier,
